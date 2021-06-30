@@ -6,82 +6,129 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"polygon.io/TickerCompression"
+	"polygon.io/Ticker"
+	"time"
 )
 
-func main() {
-	jsonFileLocation, compressedFileLocation, saveFileLocation := constructFlags()
-	err := ValidateFiles(jsonFileLocation, compressedFileLocation, saveFileLocation)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var saveData string
-	if jsonFileLocation != "" {
-		jsonFile, err := ImportFile(jsonFileLocation)
-		if err != nil {
-			log.Fatal(err)
-		}
-		saveData, err = TickerCompression.Compress(jsonFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if compressedFileLocation != "" {
-		compressedFile, err := ImportFile(compressedFileLocation)
-		if err != nil {
-			log.Fatal(err)
-		}
-		saveData, err = TickerCompression.Decompress(compressedFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-	}
-
-	err = SaveFile(saveData, saveFileLocation)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
+type configuration struct {
+	ApiKey                 string
+	day                    int
+	month                  int
+	year                   int
+	Date                   *time.Time
+	CompressedFileLocation string
+	OrignalFileLocation    string
+	Stock                  string
 }
 
-func constructFlags() (string, string, string) {
-	jsonFileLocation := flag.String("c", "", "Specify a ticker json file location")
-	compressedFileLocation := flag.String("d", "", "Specify a compressed file location")
-	saveFileLocation := flag.String("s", "", "Specify a final save point for file")
+func main() {
+	var (
+		orignalData, compressedData, decompressedData string
+	)
+	config, err := hydrateConfiguration()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	orignalData, err = Ticker.GetDaysData(config.ApiKey, config.Stock, config.Date)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_ = SaveFile(orignalData, config.OrignalFileLocation)
+	compressedData, err = Ticker.Compress(orignalData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	decompressedData, err = Ticker.Decompress(compressedData)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if decompressedData != orignalData {
+		_ = SaveFile(compressedData, config.CompressedFileLocation)
+
+		log.Fatal(fmt.Errorf("Files do not match"))
+	}
+
+	log.Printf("Files Match")
+}
+
+func hydrateConfiguration() (configuration, error) {
+
+	config := createConfiguration()
+	if config.ApiKey == "" {
+		return configuration{}, fmt.Errorf("API Key needed")
+	}
+
+	err := validateFiles(config.CompressedFileLocation, config.OrignalFileLocation)
+	if err != nil {
+		return configuration{}, err
+	}
+
+	config.Date, err = validateAndFormatDate(config.day, config.month, config.year)
+	if err != nil {
+		return configuration{}, err
+	}
+
+	return config, nil
+}
+
+func createConfiguration() configuration {
+
+	apiKey := flag.String("a", "", "Polygon.io API Key")
+	day := flag.Int("d", 0, "Specify a day of the month: 1, 2, 3 ...")
+	month := flag.Int("m", 0, "Specify a month number: 1 for January, 2 for Feburary ...")
+	year := flag.Int("y", 0, "Specify a year: 2021, 2020 ...")
+	compressedFileLocation := flag.String("c", "./compressedfile", "Specify a compressed file location")
+	orignalFileLocation := flag.String("s", "./orignalfile.json", "Specify a final save point for file")
 	flag.Parse()
 
-	return *jsonFileLocation, *compressedFileLocation, *saveFileLocation
+	return configuration{
+		Stock:                  "AAPL",
+		ApiKey:                 *apiKey,
+		CompressedFileLocation: *compressedFileLocation,
+		OrignalFileLocation:    *orignalFileLocation,
+		day:                    *day,
+		month:                  *month,
+		year:                   *year,
+	}
+
 }
 
-//Validates files to both see if the correct file locations are given and to see if the files esist, or in the case of a save file, doesn't exist.
-func ValidateFiles(jsonFileLocation, compressedFileLocation, saveFileLocation string) error {
+func validateAndFormatDate(day int, month int, year int) (*time.Time, error) {
 
-	if (jsonFileLocation == "" && compressedFileLocation == "") || (jsonFileLocation != "" && compressedFileLocation != "") {
-		return fmt.Errorf("You must specify either a ticker json file location or a compressed file location")
+	if day == 0 || month == 0 || year == 0 {
+		return nil, fmt.Errorf("Please supply day, month and year")
 	}
 
-	if jsonFileLocation != "" {
-		err := checkFileLocation(jsonFileLocation)
-		if err != nil {
-			return err
-		}
+	if day > 31 {
+		return nil, fmt.Errorf("Day is not a real day")
 	}
 
-	if compressedFileLocation != "" {
-		err := checkFileLocation(compressedFileLocation)
-		if err != nil {
-			return err
-		}
+	//Year Apple stock went live
+	if year < 1980 {
+		return nil, fmt.Errorf("Year is not possible for Stock")
 	}
 
-	err := checkFileLocation(saveFileLocation)
-	if err == nil || !os.IsNotExist(err) {
-		return fmt.Errorf("Save File Location already exists")
-	} else if err != nil {
+	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.UTC)
+	if date.After(time.Now()) {
+		return nil, fmt.Errorf("Period of time has not occured yet")
+	}
+
+	return &date, nil
+
+}
+func validateFiles(compressedFileLocation, orignalFileLocation string) error {
+
+	err := checkFileLocation(compressedFileLocation)
+	if err != nil {
+		return err
+	}
+
+	err = checkFileLocation(orignalFileLocation)
+	if err != nil {
 		return err
 	}
 
@@ -93,11 +140,12 @@ func checkFileLocation(fileLocation string) error {
 	_, err := os.Stat(fileLocation)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("A File Location does not exist. Double check file %s ", fileLocation)
+			return nil
 		}
 		return err
 	}
-	return nil
+
+	return fmt.Errorf("A File Location exists already. Double check file %s ", fileLocation)
 }
 
 //ImportFile just imports the file into a string.
