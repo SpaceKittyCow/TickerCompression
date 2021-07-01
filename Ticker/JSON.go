@@ -1,12 +1,12 @@
 package Ticker
 
 type Ticker struct {
-	Name            string    `json:"ticker"`
-	ResultCount     int64     `json:"results_count"`
-	DatabaseLatency int64     `json:"db_latency"`
-	Success         bool      `json:"success"`
-	Results         []Result  `json:"results"`
-	Map             ResultMap `json:"map"`
+	Results         []Result `json:"results"`
+	Success         bool     `json:"success"`
+	Map             Maps     `json:"map"`
+	Name            string   `json:"ticker"`
+	ResultCount     int64    `json:"results_count"`
+	DatabaseLatency int64    `json:"db_latency"`
 }
 
 type keyMap struct {
@@ -14,24 +14,20 @@ type keyMap struct {
 	Type string `json:"type"`
 }
 
-type ResultMap struct {
-	Map Maps `json:"map"`
-}
-
 type Maps struct {
-	OrignalID   keyMap `json:"I"`
+	Tape        keyMap `json:"z"`
+	Conditions  keyMap `json:"c"`
 	Exchange    keyMap `json:"x"`
-	Price       keyMap `json:"p"`
+	Trf         keyMap `json:"f"`
+	Sequence    keyMap `json:"q"`
 	ID          keyMap `json:"i"`
+	OrignalID   keyMap `json:"I"`
 	Correction  keyMap `json:"e"`
 	TRFID       keyMap `json:"r"`
 	SIP         keyMap `json:"t"`
 	Participant keyMap `json:"y"`
-	Trf         keyMap `json:"f"`
-	Sequence    keyMap `json:"q"`
-	Conditions  keyMap `json:"c"`
 	Size        keyMap `json:"s"`
-	Tape        keyMap `json:"z"`
+	Price       keyMap `json:"p"`
 }
 
 type Result struct {
