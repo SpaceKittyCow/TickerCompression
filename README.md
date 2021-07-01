@@ -2,17 +2,17 @@ Ticker Compression
 
 Ticker Stock Pricing Compression Module 
 
-Used to compress and decopress JSON file from Polygon.io /v2/ticks/stocks/trades/{ticker} endpoint, though with some alteration could be used for any JSON that has some kind of mapping in it. 
+Used to compress and decopress JSON file from Polygon.io /v2/ticks/stocks/trades/{ticker} endpoint (APPL only for now), though with some alteration could be used for any JSON that has some kind of mapping in it. 
 
-Would recommend not running the whole day, but just a constrained results call, like the example below. It take forever for a day long call to run.
+Would recommend not running the whole day, but just a constrained results call, like the example below. It takes forever for a day long call to run.
 
 Logrithimitically saves the data, so the larger the set, the smaller the save file, starting at 40% compression for 10 results onwards.
 
 Sample call:
-./polygon.io -a={apiKey} -d=14 -m=10 -y=2020 -r=40
+``` ./polygon.io -a={apiKey} -d=14 -m=10 -y=2020 -r=40 ```
 
 polygon.io --help: 
-
+```
 Usage of ./polygon.io:
   -a string
     	Polygon.io API Key
@@ -30,4 +30,5 @@ Usage of ./polygon.io:
     	Specify a save location of the orignal file (default "./orignalfile.json")
   -y int
     	Specify a year: 2021, 2020 ...
+      ```
 
