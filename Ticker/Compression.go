@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//Compress compresses JSON into a CSV like format for Polygon.io data. It also does subtraction on all the data it can to shrink the data even more. TODO: This should be converted to using concurrancy for long calls.
 func Compress(data string) (string, error) {
 	var (
 		ticker          = Ticker{}
@@ -23,7 +24,7 @@ func Compress(data string) (string, error) {
 
 	resultsToEncode = ticker.Results
 	log.Printf("start encoding")
-	encodedResults, err := CompressResults(resultsToEncode)
+	encodedResults, err := compressResults(resultsToEncode)
 	if err != nil {
 		return "", err
 	}
@@ -39,7 +40,7 @@ func Compress(data string) (string, error) {
 	return fmt.Sprintf("%s \n%s", outline, encodedResults), nil
 }
 
-func CompressResults(resultsToEncode []Result) (string, error) {
+func compressResults(resultsToEncode []Result) (string, error) {
 	var (
 		masterList string
 		lastResult = Result{}
@@ -89,6 +90,7 @@ func writeCompressedLine(compressed Result) string {
 
 }
 
+//Decompress takes the Data from Compress and is able to reproduce the JSON that was passed in.
 func Decompress(compressedData string) (string, error) {
 	var (
 		lastResult         = Result{}

@@ -30,6 +30,7 @@ const (
 	OrignalFileDefault              = "./orignalfile.json"
 )
 
+//main is the where configuration is made, and then passed on to the API, Compression and Decompression of the Application
 func main() {
 	var (
 		orignalData, compressedData, decompressedData string
@@ -64,14 +65,15 @@ func main() {
 	log.Println("Saving Compressed Data")
 	_ = SaveFile(compressedData, config.CompressedFileLocation)
 
+	log.Println("Decompressing Data")
 	decompressedData, err = Ticker.Decompress(compressedData)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("%s", decompressedData)
+	log.Println("Saving Decompressed Data")
+	_ = SaveFile(decompressedData, config.DecompressedFileLocation)
 	if decompressedData != orignalData {
-		_ = SaveFile(decompressedData, config.DecompressedFileLocation)
 
 		log.Fatal(fmt.Errorf("Files do not match"))
 	}

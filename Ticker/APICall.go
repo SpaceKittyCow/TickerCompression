@@ -53,6 +53,7 @@ func GetDaysData(apiKey, stock string, date *time.Time, count int) (string, erro
 	return "", fmt.Errorf("Something unexpected happened on API call")
 }
 
+//GetMeteredTicker get the stocks from a limited number data
 func GetMeteredTicker(apiKey, stock string, date *time.Time, limit int) (string, error) {
 
 	var (
