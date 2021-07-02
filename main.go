@@ -83,7 +83,7 @@ func main() {
 	log.Printf(" API Called Data File: %s \n JSON Data Bypass File: %s \n Compressed Data: %s \n DecompressedData:%s",
 		config.OrignalFileLocation,
 		config.JSONFileLocation,
-		config.OrignalFileLocation,
+		config.CompressedFileLocation,
 		config.DecompressedFileLocation)
 }
 
