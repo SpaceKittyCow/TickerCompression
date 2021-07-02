@@ -100,6 +100,7 @@ func callForData(apiKey string, timeOffset *time.Time, stock string, limit int) 
 	if err != nil {
 		return Ticker{}, err
 	}
+
 	return ticker, nil
 }
 

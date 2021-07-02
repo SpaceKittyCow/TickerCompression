@@ -31,13 +31,14 @@ type Maps struct {
 }
 
 type Result struct {
-	SIP         int64   `json:"t"`
-	Participant int64   `json:"y"`
-	Sequence    int     `json:"q"`
-	ID          string  `json:"i"`
-	Exchange    int     `json:"x"`
-	Size        int     `json:"s"`
-	Conditions  []int   `json:"c"`
-	Price       float64 `json:"p"`
-	Tape        int     `json:"z"`
+	SIP         int64  `json:"t"`
+	Participant int64  `json:"y"`
+	Sequence    int    `json:"q"`
+	ID          string `json:"i"`
+	Exchange    int    `json:"x"`
+	Size        int    `json:"s"`
+	//Because this can be empty, it's a pointer cause JSON in GO is frustrating
+	Conditions *[]int  `json:"c,omitempty"`
+	Price      float64 `json:"p"`
+	Tape       int     `json:"z"`
 }

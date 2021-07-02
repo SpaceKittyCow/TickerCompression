@@ -79,6 +79,12 @@ func main() {
 	}
 
 	log.Printf("Files Match")
+
+	log.Printf(" API Called Data File: %s \n JSON Data Bypass File: %s \n Compressed Data: %s \n DecompressedData:%s",
+		config.OrignalFileLocation,
+		config.JSONFileLocation,
+		config.OrignalFileLocation,
+		config.DecompressedFileLocation)
 }
 
 func initConfiguration() (configuration, error) {

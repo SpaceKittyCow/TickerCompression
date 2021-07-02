@@ -56,7 +56,9 @@ func compressResults(resultsToEncode []Result) (string, error) {
 			continue
 		}
 
-		log.Printf("at %d", i)
+		if i%10000 == 0 {
+			log.Printf("at %d", i)
+		}
 		compress = resultsToEncode[i]
 		compress.SIP = resultsToEncode[i].SIP - lastResult.SIP
 		compress.Participant = resultsToEncode[i].Participant - lastResult.Participant
@@ -77,6 +79,12 @@ func compressResults(resultsToEncode []Result) (string, error) {
 
 func writeCompressedLine(compressed Result) string {
 	// SIP t Participant y Sequence q ID i Exchange x Size s Conditions c Price p Tape z
+	var conditions string
+	if compressed.Conditions != nil {
+		conditions = fmt.Sprintf("%d", *compressed.Conditions)
+	} else {
+		conditions = "[]"
+	}
 	return fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
 		strconv.FormatInt(compressed.SIP, 10),
 		strconv.FormatInt(compressed.Participant, 10),
@@ -84,7 +92,7 @@ func writeCompressedLine(compressed Result) string {
 		compressed.ID,
 		strconv.Itoa(compressed.Exchange),
 		strconv.Itoa(compressed.Size),
-		fmt.Sprintf("%d", compressed.Conditions),
+		conditions,
 		strconv.FormatFloat(compressed.Price, 'f', -1, 64),
 		strconv.Itoa(compressed.Tape))
 
@@ -104,7 +112,9 @@ func Decompress(compressedData string) (string, error) {
 	}
 	for i := 1; i < len(seperatedData)-1; i++ {
 
-		log.Println("%d", i)
+		if i%10000 == 0 {
+			log.Printf("at %d", i)
+		}
 		decompressed, err := readCompressedLine(seperatedData[i])
 		if err != nil {
 			return "", err
@@ -135,7 +145,6 @@ func readCompressedLine(decompress string) (Result, error) {
 	)
 	// SIP t Participant y Sequence q ID i Exchange x Size s Conditions c Price p Tape z
 	seperatedFields := strings.Split(decompress, ",")
-	log.Printf(seperatedFields[4])
 	decompressed.SIP, err = strconv.ParseInt(seperatedFields[0], 10, 64)
 	if err != nil {
 		return Result{}, err
@@ -158,14 +167,20 @@ func readCompressedLine(decompress string) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	var inter []int
+
 	str := strings.Replace(seperatedFields[6], " ", ",", -1)
+	inter := make([]int, 0)
 	err = json.Unmarshal([]byte(str), &inter)
 
 	if err != nil {
-		log.Fatal(err)
+		return Result{}, err
 	}
-	decompressed.Conditions = inter
+	if len(inter) == 0 {
+		decompressed.Conditions = nil
+	} else {
+		decompressed.Conditions = &inter
+	}
+
 	decompressed.Price, err = strconv.ParseFloat(seperatedFields[7], 64)
 	if err != nil {
 		return Result{}, err
